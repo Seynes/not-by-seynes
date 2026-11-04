@@ -1,0 +1,36 @@
+name: APK
+on:
+  push:
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: unzip -q not_by_seynes.zip
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - name: Android projesini hazırla
+        working-directory: not_by_seynes
+        run: |
+          flutter create --org com.seynes --project-name not_by_seynes .
+          rm -rf test
+          M=android/app/src/main/AndroidManifest.xml
+          sed -i 's/android:label="[^"]*"/android:label="Not by Seynes"/' $M
+          sed -i -e '/<manifest/a\    <uses-permission android:name="android.permission.RECORD_AUDIO"/>' -e '/<manifest/a\    <uses-permission android:name="android.permission.INTERNET"/>' $M
+          sed -i 's#<queries>#<queries><intent><action android:name="android.speech.RecognitionService"/></intent>#' $M
+          sed -i 's/minSdk = flutter.minSdkVersion/minSdk = 24/; s/minSdkVersion flutter.minSdkVersion/minSdkVersion 24/' android/app/build.gradle* || true
+      - name: APK derle
+        working-directory: not_by_seynes
+        run: |
+          flutter pub get
+          flutter build apk --release
+      - uses: actions/upload-artifact@v4
+        with:
+          name: not-by-seynes-apk
+          path: not_by_seynes/build/app/outputs/flutter-apk/app-release.apk
