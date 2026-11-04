@@ -22,7 +22,12 @@ jobs:
           rm -rf test
           python3 - <<'PY'
           import re
+          import glob
           import xml.dom.minidom
+          for q in glob.glob('android/app/src/*/AndroidManifest.xml'):
+              t = open(q, encoding='utf-8').read()
+              t = re.sub(r'(<manifest[^>]*?)\s+package="[^"]*"', r'\1', t, count=1)
+              open(q, 'w', encoding='utf-8').write(t)
           p = 'android/app/src/main/AndroidManifest.xml'
           s = open(p, encoding='utf-8').read()
           s = re.sub(r'android:label="[^"]*"', 'android:label="Not by Seynes"', s, count=1)
