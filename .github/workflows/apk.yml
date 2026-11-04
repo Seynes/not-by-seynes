@@ -42,6 +42,7 @@ jobs:
       - name: APK derle
         working-directory: not_by_seynes
         run: |
+          sed -i 's/speech_to_text: .*/speech_to_text: ^7.0.0/' pubspec.yaml
           flutter pub get
           flutter build apk --release
       - uses: actions/upload-artifact@v4
