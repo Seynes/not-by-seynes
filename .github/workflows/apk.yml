@@ -20,10 +20,24 @@ jobs:
         run: |
           flutter create --org com.seynes --project-name not_by_seynes .
           rm -rf test
-          M=android/app/src/main/AndroidManifest.xml
-          sed -i 's/android:label="[^"]*"/android:label="Not by Seynes"/' $M
-          sed -i -e '/<manifest/a\    <uses-permission android:name="android.permission.RECORD_AUDIO"/>' -e '/<manifest/a\    <uses-permission android:name="android.permission.INTERNET"/>' $M
-          sed -i 's#<queries>#<queries><intent><action android:name="android.speech.RecognitionService"/></intent>#' $M
+          python3 - <<'PY'
+          import re
+          import xml.dom.minidom
+          p = 'android/app/src/main/AndroidManifest.xml'
+          s = open(p, encoding='utf-8').read()
+          s = re.sub(r'android:label="[^"]*"', 'android:label="Not by Seynes"', s, count=1)
+          izinler = ('<uses-permission android:name="android.permission.RECORD_AUDIO"/>\n'
+                     '    <uses-permission android:name="android.permission.INTERNET"/>\n    ')
+          intent = '<intent><action android:name="android.speech.RecognitionService"/></intent>'
+          if '<queries>' in s:
+              s = s.replace('<queries>', '<queries>' + intent, 1)
+          else:
+              izinler += '<queries>' + intent + '</queries>\n    '
+          s = s.replace('<application', izinler + '<application', 1)
+          open(p, 'w', encoding='utf-8').write(s)
+          xml.dom.minidom.parse(p)
+          print(s)
+          PY
           sed -i 's/minSdk = flutter.minSdkVersion/minSdk = 24/; s/minSdkVersion flutter.minSdkVersion/minSdkVersion 24/' android/app/build.gradle* || true
       - name: APK derle
         working-directory: not_by_seynes
